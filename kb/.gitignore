@@ -13,3 +13,7 @@ __pycache__/
 *.pyc
 # Python 虚拟环境目录（依赖由 pyproject.toml + uv.lock 锁定，venv 无需提交）
 .venv/
+
+
+
+atguigu/import_process/nodes/node_pdf_to_md_full.py

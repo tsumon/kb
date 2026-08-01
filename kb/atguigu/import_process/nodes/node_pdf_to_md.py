@@ -106,11 +106,7 @@ class NodePDFToMD(NodeBase):
                 else:
                     logger.error(f"{urls[i]} 上传失败")
 
-        return batch_id
-
-
-
-
+        return state
 
 
 if __name__ == '__main__':
