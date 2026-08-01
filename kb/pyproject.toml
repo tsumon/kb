@@ -1,0 +1,28 @@
+# ============================================================
+# pyproject.toml — Python 项目元数据配置文件（PEP 621 标准）
+# ============================================================
+# 用途：定义项目的名称、版本、Python 版本要求、依赖包等信息。
+# 工具：uv / pip 等包管理器根据此文件解析并安装依赖。
+# ============================================================
+
+[project]
+# 项目名称（PyPI 包名，小写字母 + 连字符）
+name = "kb"
+# 项目版本号（遵循语义化版本 SemVer：主版本.次版本.修订号）
+version = "0.1.0"
+# 项目要求的 Python 解释器最低版本（>= 3.12 表示 3.12 及以上均可）
+requires-python = ">=3.12"
+# 项目运行时依赖列表（pip install 时会自动安装这些包）
+dependencies = [
+    "colorlog>=6.12.0",              # 彩色日志输出库，让日志在终端中按级别显示不同颜色
+    "fastapi>=0.141.1",              # 高性能 Web 框架，用于构建 RESTful API 接口
+    "grandalf>=0.8",                 # 图形布局引擎，用于图的自动排布和可视化
+    "langchain>=1.3.14",             # LangChain 核心框架，提供 LLM 应用开发的基础组件
+    "langchain-openai>=1.4.1",       # LangChain 的 OpenAI 集成，支持调用 OpenAI 兼容 API
+    "langchain-text-splitters>=1.1.2",  # LangChain 文本切分器，按语义/字符/Token 等策略切分长文本
+    "langgraph>=1.2.10",             # LangGraph 图状态机框架，用于构建多步骤 LLM 工作流
+    "minio>=7.2.20",                 # MinIO 对象存储客户端，用于上传/下载文件到 MinIO 存储桶
+    "numpy>=2.5.1",                  # 数值计算库，提供高性能多维数组和数学运算
+    "pymongo>=4.17.0",               # MongoDB 官方 Python 驱动，用于连接和操作 MongoDB 数据库
+    "python-dotenv>=1.2.2",          # .env 文件加载库，将 .env 中的键值对注入系统环境变量
+]
