@@ -44,6 +44,25 @@ class NodePDFToMD(NodeBase):
         :param state: 工作流状态字典
         :return:     更新后的状态字典（当前直接透传）
         """
+        #step1 检查pdf_path是否存在
+        pdf_path, pdf_path_obj, local_dir_obj = self.check_path(state)
+
+        #step2 上传pdf到mineru 获取batch_id
+        batch_id = self.upload_pdf(pdf_path,pdf_path_obj)
+
+        #step3 等待mineru处理完成,轮询mineru获取结果,结果为zip的url
+        md_zip_url = self.get_md_zip_url(batch_id)
+
+        #step4 下载zip压缩文件,压缩,重命名,把文件内容读取保存state
+        md_content,new_md_path_obj = self.download_zip_handler(md_zip_url,local_dir_obj,pdf_path_obj)
+        return{
+            "md_content": md_content,
+            "md_path": str(new_md_path_obj)
+        }
+
+
+
+    def check_path(self, state: ImportGraphState) -> tuple[str, Path, Path]:
         pdf_path = state.get("pdf_path", "")
         if not pdf_path:
             logger.error("未提供PDF路径")
@@ -62,8 +81,9 @@ class NodePDFToMD(NodeBase):
         local_dir_obj = Path(local_dir)
         if not local_dir_obj.exists():
             local_dir_obj.mkdir(parents=True, exist_ok=True)
+        return pdf_path, pdf_path_obj, local_dir_obj
 
-        #上传pdf到mineru 获取batch_id
+    def upload_pdf(self,pdf_path,pdf_path_obj):
         import requests
 
         token = MineruConfig.mineru_token
@@ -90,7 +110,6 @@ class NodePDFToMD(NodeBase):
         logger.info(f"上传文件成功")
         result = response.json()
 
-
         if result["code"] != 0:
             logger.error("上传文件请求数据失败")
             raise Exception(f"上传PDF文件请求数据失败")
@@ -106,7 +125,88 @@ class NodePDFToMD(NodeBase):
                 else:
                     logger.error(f"{urls[i]} 上传失败")
 
-        return state
+        return batch_id
+
+    def get_md_zip_url(self,batch_id):
+        import requests
+        import time
+        token = MineruConfig.mineru_token
+        batch_id = batch_id
+        url = f"{MineruConfig.mineru_base_url}/extract-results/batch/{batch_id}"
+        header = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}"
+        }
+        #计时
+        total_time = 300  # 总时间
+        retry_interval = 3  # 每次重试间隔秒数
+        start_time = time.time()
+        while True:
+            try:
+                res = requests.get(url, headers=header)
+                if res.status_code != 200:
+                    logger.error(f"获取PDF文件处理结果请求失败，状态码: {res.status_code}，响应: {res.text[:200]}")
+                    raise Exception(f"获取PDF文件处理结果请求失败，状态码: {res.status_code}")
+
+                result = res.json()
+                if result["code"] != 0:
+                    logger.error(f"获取PDF文件处理结果请求数据失败，code: {result['code']}，msg: {result.get('msg', '')}")
+                    raise Exception(f"获取PDF文件处理结果请求数据失败，code: {result['code']}")
+
+                data = result["data"]['extract_result'][0]
+                if data['state'] != "done":
+                    logger.info(f"PDF文件处理中，当前状态: {data['state']}")
+                    raise Exception(f"PDF文件处理中尚未完成")
+
+                zip_url = data['full_zip_url']
+                logger.info(f"PDF文件处理完成，获取到zip_url")
+                return zip_url
+            except Exception as e:
+                logger.error(f"PDF文件处理异常，等待{retry_interval}秒后重试: {e}")
+                use_time = time.time() - start_time
+                if use_time > total_time:
+                    raise Exception(f"PDF文件处理超时（已等待{use_time:.0f}秒），请稍后再试")
+                time.sleep(retry_interval)
+                continue
+
+    def download_zip_handler(self,md_zip_url,local_dir_obj,pdf_path_obj):
+        import requests
+        md_zip_res = requests.get(md_zip_url)
+        if md_zip_res.status_code != 200:
+            logger.error("下载PDF文件处理结果zip压缩包请求失败")
+            raise Exception(f"下载PDF文件处理结果zip压缩包请求失败")
+        md_zip_content = md_zip_res.content #通过文件流操作把zip内容写入磁盘文件
+        md_zip_path_obj = local_dir_obj / f"{pdf_path_obj.stem}.zip" #构造下载的磁盘文件路径
+
+        #以后读写文件如果是读写二进制,就不要加encoding='utf-8',容如果不是就加
+        with open(md_zip_path_obj, 'wb') as f:
+            f.write(md_zip_content)
+        #解压zip文件
+        import zipfile
+        import shutil
+
+        unzip_file_content = zipfile.ZipFile(md_zip_path_obj)
+        unzip_file_path_obj = local_dir_obj / f"{pdf_path_obj.stem}"
+
+        #判断压缩的目录存不存在，如果存在先删除,然后再创建
+        if unzip_file_path_obj.exists():
+            shutil.rmtree(unzip_file_path_obj)
+        unzip_file_path_obj.mkdir(parents=True, exist_ok=True)
+
+        unzip_file_content.extractall(unzip_file_path_obj) #真正把解压内容,放到这个目录
+
+        #完成解压,重命名full.md
+        origin_md_file_path_obj = unzip_file_path_obj / "full.md"
+        new_md_file_path_obj = unzip_file_path_obj / f"{pdf_path_obj.stem}.md"
+        origin_md_file_path_obj.rename(new_md_file_path_obj)
+
+        #读取md文件,存储state
+        with open(new_md_file_path_obj, 'r', encoding='utf-8') as f:
+            md_content = f.read()
+        return md_content, new_md_file_path_obj
+
+
+
 
 
 if __name__ == '__main__':
