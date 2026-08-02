@@ -16,4 +16,7 @@ __pycache__/
 
 
 
-atguigu/import_process/nodes/node_pdf_to_md_full.py
+# *_full.py：带逐行注释的完整版代码文件，仅供学习参考，不提交
+*_full.py
+# macOS 接入外接硬盘时自动生成的 Apple Double 元数据文件（._ 前缀）
+._*
