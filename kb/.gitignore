@@ -20,3 +20,7 @@ __pycache__/
 *_full.py
 # macOS 接入外接硬盘时自动生成的 Apple Double 元数据文件（._ 前缀）
 ._*
+
+
+# 测试文件（所有名字包含 test 的 Python 文件都不提交）
+*test*.py
