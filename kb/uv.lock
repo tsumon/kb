@@ -291,6 +291,12 @@ wheels = [
 ]
 
 [[package]]
+name = "func-timeout"
+version = "4.3.5"
+source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }
+sdist = { url = "https://pypi.tuna.tsinghua.edu.cn/packages/b3/0d/bf0567477f7281d9a3926c582bfef21bff7498fc0ffd3e9de21811896a0b/func_timeout-4.3.5.tar.gz", hash = "sha256:74cd3c428ec94f4edfba81f9b2f14904846d5ffccc27c92433b8b5939b5575dd", size = 44264, upload-time = "2019-08-19T21:32:07.43Z" }
+
+[[package]]
 name = "grandalf"
 version = "0.8"
 source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }
@@ -450,6 +456,7 @@ dependencies = [
     { name = "langchain-text-splitters" },
     { name = "langgraph" },
     { name = "minio" },
+    { name = "minio-client" },
     { name = "numpy" },
     { name = "pymongo" },
     { name = "python-dotenv" },
@@ -465,6 +472,7 @@ requires-dist = [
     { name = "langchain-text-splitters", specifier = ">=1.1.2" },
     { name = "langgraph", specifier = ">=1.2.10" },
     { name = "minio", specifier = ">=7.2.20" },
+    { name = "minio-client", specifier = ">=1.0.0" },
     { name = "numpy", specifier = ">=2.5.1" },
     { name = "pymongo", specifier = ">=4.17.0" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
@@ -640,6 +648,19 @@ dependencies = [
 sdist = { url = "https://pypi.tuna.tsinghua.edu.cn/packages/40/df/6dfc6540f96a74125a11653cce717603fd5b7d0001a8e847b3e54e72d238/minio-7.2.20.tar.gz", hash = "sha256:95898b7a023fbbfde375985aa77e2cd6a0762268db79cf886f002a9ea8e68598", size = 136113, upload-time = "2025-11-27T00:37:15.569Z" }
 wheels = [
     { url = "https://pypi.tuna.tsinghua.edu.cn/packages/3e/9a/b697530a882588a84db616580f2ba5d1d515c815e11c30d219145afeec87/minio-7.2.20-py3-none-any.whl", hash = "sha256:eb33dd2fb80e04c3726a76b13241c6be3c4c46f8d81e1d58e757786f6501897e", size = 93751, upload-time = "2025-11-27T00:37:13.993Z" },
+]
+
+[[package]]
+name = "minio-client"
+version = "1.0.0"
+source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }
+dependencies = [
+    { name = "func-timeout" },
+    { name = "minio" },
+]
+sdist = { url = "https://pypi.tuna.tsinghua.edu.cn/packages/a6/f2/39538ccc02dda04705c61380f95b09bbc81a250f881154e1879606d528c9/minio_client-1.0.0.tar.gz", hash = "sha256:e3e2469eff85a116d963c840491cefaaaa036e68cf26291c46345fc820bcc355", size = 36763, upload-time = "2025-12-28T03:19:48.432Z" }
+wheels = [
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/61/66/b4d01b402ea0c323ff813f2fa6bc4f3568ab5c8af1665323efb3b15d616f/minio_client-1.0.0-py3-none-any.whl", hash = "sha256:dbae74c522ac245a9e5fcef08d9a913cf1da21fb2f00f076a0d3049cfdc42c23", size = 3719, upload-time = "2025-12-28T03:19:47.005Z" },
 ]
 
 [[package]]

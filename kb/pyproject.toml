@@ -22,6 +22,7 @@ dependencies = [
     "langchain-text-splitters>=1.1.2",  # LangChain 文本切分器，按语义/字符/Token 等策略切分长文本
     "langgraph>=1.2.10",             # LangGraph 图状态机框架，用于构建多步骤 LLM 工作流
     "minio>=7.2.20",                 # MinIO 对象存储客户端，用于上传/下载文件到 MinIO 存储桶
+    "minio-client>=1.0.0",
     "numpy>=2.5.1",                  # 数值计算库，提供高性能多维数组和数学运算
     "pymongo>=4.17.0",               # MongoDB 官方 Python 驱动，用于连接和操作 MongoDB 数据库
     "python-dotenv>=1.2.2",          # .env 文件加载库，将 .env 中的键值对注入系统环境变量
