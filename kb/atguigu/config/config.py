@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
-load_dotenv()
-
+env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.env"))
+load_dotenv(dotenv_path=env_path, override=True)
 
 class MineruConfig:
     mineru_token = os.getenv("MINERU_TOKEN")
@@ -28,4 +28,4 @@ class MinIOConfig:
     minio_access_key = os.getenv("MINIO_ACCESS_KEY")
     minio_secret_key = os.getenv("MINIO_SECRET_KEY")
     minio_bucket_name = os.getenv("MINIO_BUCKET_NAME")
-    mineru_img_dir = os.getenv("MINIO_IMG_DIR")
+    minio_img_dir = os.getenv("MINIO_IMG_DIR")

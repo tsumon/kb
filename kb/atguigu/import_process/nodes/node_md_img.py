@@ -14,8 +14,9 @@ from collections import deque
 from pathlib import Path
 
 from langchain.chat_models import init_chat_model
+from minio.deleteobjects import DeleteObject
 
-from atguigu.config.config import LLMConfig
+from atguigu.config.config import LLMConfig, MinIOConfig
 from atguigu.import_process import state
 # 导入抽象基类
 from atguigu.import_process.base import NodeBase
@@ -23,6 +24,7 @@ from atguigu.import_process.base import NodeBase
 from atguigu.import_process.state import ImportGraphState
 from atguigu.tool.json_format_tool import json_format
 from atguigu.tool.logger import logger
+from atguigu.tool.minio_client_tool import get_minio_client, minio_client
 
 
 class NodeMDImg(NodeBase):
@@ -37,44 +39,6 @@ class NodeMDImg(NodeBase):
 
     # 覆盖基类的 name 属性，标识此节点名称为 "node_md_img"
     name = "node_md_img"
-
-    def process(self, state: ImportGraphState) -> ImportGraphState:
-        """
-        Markdown 图片 → 文本描述的核心逻辑（当前为骨架占位）
-        预期实现：
-        1. 从 state.md_content 中正则匹配所有 ![](url) 或 <img> 标签
-        2. 下载或读取本地图片文件
-        3. 调用 VLM（如 GPT-4o）生成图片描述
-        4. 将描述文本插入 Markdown，替代或补充图片链接
-        5. 将处理后的 Markdown 写回 state.md_content
-
-        :param state: 工作流状态字典
-        :return:     更新后的状态字典（当前直接透传）
-        """
-        # step1 取得md内容以及路径对象
-        md_content, md_path_obj = self.get_md_content(state)
-
-        # 构造图片存储路径
-        img_dir_path_obj = md_path_obj.parent / "images"
-        if not img_dir_path_obj.exists():
-            logger.warning("图片目录不存在，跳过图片处理")
-            return {"md_content": md_content}
-
-        img_name_list = os.listdir(img_dir_path_obj)  # 列出目录下所有文件名以及文件夹名
-        if not img_name_list:
-            logger.warning("图片目录为空，跳过图片处理")
-            return {"md_content": md_content}
-
-        # step2 取得图片的上下文列表，根据图片正则拿到图片位置，获取上下文
-        img_with_context_list = self.get_image_with_content_list(img_dir_path_obj, img_name_list, md_content)
-        if not img_with_context_list:
-            logger.warning("markdown中没有有效的图片引用，跳过图片处理")
-            return {"md_content": md_content}
-
-        # step3 调用视觉模型生成摘要
-        image_with_summary_list = self.get_image_with_summary_list(img_with_context_list)
-        return image_with_summary_list
-
 
 
     def get_image_with_summary_list(self, img_with_context_list):
@@ -185,7 +149,7 @@ class NodeMDImg(NodeBase):
         md_path_obj = Path(md_path)
         # markdown文件对象
         if not md_path_obj.exists():
-            logger.error("markdown文件不存在")
+            logger.error("markdown文件 %s 不存在", md_path)
             raise FileNotFoundError("markdown文件不存在")
 
         with open(md_path_obj, 'r', encoding='utf-8') as f:
@@ -195,9 +159,108 @@ class NodeMDImg(NodeBase):
 
         if not md_content:
             # 判断markdown内容是否为空
-            logger.error("markdown内容为空")
+            logger.error("markdown内容 %s 为空", md_path)
             raise ValueError("markdown内容为空")
         return md_content, md_path_obj
+
+    def get_img_with_summary_url_list(self, img_with_summary_list):
+        upload_dir = MinIOConfig.minio_img_dir
+        minio_client = get_minio_client()
+        #幂等删除这个目录当中的图片
+        #1.拿到桶中这个目录中的所有图片
+        old_img_list = minio_client.list_objects(bucket_name=MinIOConfig.minio_bucket_name,prefix=upload_dir,recursive=True)
+        #2.删除这个目录中的所有图片
+        delete_img_list = [DeleteObject(obj.object_name) for obj in old_img_list]
+        erros = minio_client.remove_objects(
+            bucket_name=MinIOConfig.minio_bucket_name,
+            delete_object_list=delete_img_list)
+        for error in erros:
+            logger.error("删除对象时发生错误: %s", error)
+
+        #upload img to minio
+        img_with_summary_url_list = []
+        for img_with_summary in img_with_summary_list:
+            minio_client.fput_object(
+                bucket_name=MinIOConfig.minio_bucket_name,
+                object_name=upload_dir + "/" + img_with_summary.get("img_name"),
+                file_path=img_with_summary.get("img_path")
+            )
+            url = f"http://{MinIOConfig.minio_endpoint}/{MinIOConfig.minio_bucket_name}/{upload_dir}/{img_with_summary.get("img_name")}"
+            img_with_summary_url_list.append({
+                **img_with_summary,
+                "image_url": url
+                 })
+
+        return img_with_summary_url_list
+
+    def replace_md_img(self,img_with_summary_url_list,md_path_obj,md_content):
+        for img_with_summary_url in img_with_summary_url_list:
+            pattern = re.compile(r"!\[.*?\]\(.*?" + re.escape(img_with_summary_url.get("img_name")) + r"\)")
+            md_content = pattern.sub(
+                lambda _: f"![{img_with_summary_url.get('summary')}]({img_with_summary_url.get('image_url')})",
+                md_content
+            )
+
+        #备份新的md文件
+        new_md_path_obj = md_path_obj.parent / str(md_path_obj.stem + "_new.md" )
+        with open(new_md_path_obj, 'w', encoding='utf-8') as f:
+            f.write(md_content)
+        return md_content, new_md_path_obj
+
+
+
+
+    def process(self, state: ImportGraphState) -> ImportGraphState:
+        """
+        Markdown 图片 → 文本描述的核心逻辑（当前为骨架占位）
+        预期实现：
+        1. 从 state.md_content 中正则匹配所有 ![](url) 或 <img> 标签
+        2. 下载或读取本地图片文件
+        3. 调用 VLM（如 GPT-4o）生成图片描述
+        4. 将描述文本插入 Markdown，替代或补充图片链接
+        5. 将处理后的 Markdown 写回 state.md_content
+
+        :param state: 工作流状态字典
+        :return:     更新后的状态字典（当前直接透传）
+        """
+        # step1 取得md内容以及路径对象
+        md_content, md_path_obj = self.get_md_content(state)
+
+        # 构造图片存储路径
+        img_dir_path_obj = md_path_obj.parent / "images"
+        if not img_dir_path_obj.exists():
+            logger.warning("图片目录不存在，跳过图片处理")
+            return {"md_content": md_content}
+
+        img_name_list = os.listdir(img_dir_path_obj)  # 列出目录下所有文件名以及文件夹名
+        if not img_name_list:
+            logger.warning("图片目录为空，跳过图片处理")
+            return {"md_content": md_content}
+
+        # step2 取得图片的上下文列表，根据图片正则拿到图片位置，获取上下文
+        img_with_context_list = self.get_image_with_content_list(img_dir_path_obj, img_name_list, md_content)
+
+
+        # step3 调用视觉模型生成摘要
+        img_with_summary_list = self.get_image_with_summary_list(img_with_context_list)
+
+
+        #step4 上传图片到minio,自己构造图片的线上url，放到列表当中
+        img_with_summary_url_list = self.get_img_with_summary_url_list(img_with_summary_list)
+
+        # step5 替换md中的图片链接
+        md_content, new_md_path_obj = self.replace_md_img(img_with_summary_url_list, md_path_obj, md_content)
+
+        return {"md_content": md_content,}
+
+
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
