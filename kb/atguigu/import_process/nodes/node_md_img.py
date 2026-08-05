@@ -205,7 +205,8 @@ class NodeMDImg(NodeBase):
         new_md_path_obj = md_path_obj.parent / str(md_path_obj.stem + "_new.md" )
         with open(new_md_path_obj, 'w', encoding='utf-8') as f:
             f.write(md_content)
-        return md_content, new_md_path_obj
+        return {"md_content": md_content,
+                "md_path":str(new_md_path_obj)}
 
 
 
