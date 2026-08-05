@@ -70,7 +70,7 @@ class NodeEntry(NodeBase):
             }
         else:
             logger.error("不支持的文件类型")
-            return ValueError(f"不支持的文件类型:{suffix}")
+            raise ValueError(f"不支持的文件类型:{suffix}")
 
 if __name__ == '__main__':
     node = NodeEntry()
