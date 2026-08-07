@@ -1,5 +1,4 @@
 from typing import List
-from unittest import result
 
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 from atguigu.config.config import EmbeddingConfig
