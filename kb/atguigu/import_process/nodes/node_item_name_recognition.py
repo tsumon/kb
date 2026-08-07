@@ -6,11 +6,14 @@
 #       将识别结果作为标签写入 state.item_name，便于后续分类检索。
 #       当前为骨架代码，process() 只透传状态。
 # ============================================================
+import json
 
 # 导入抽象基类
 from atguigu.import_process.base import NodeBase
 # 导入工作流状态类型
 from atguigu.import_process.state import ImportGraphState
+from atguigu.tool.logger import logger
+
 
 class NodeItemNameRecognition(NodeBase):
     """
@@ -37,4 +40,34 @@ class NodeItemNameRecognition(NodeBase):
         :param state: 工作流状态字典
         :return:     更新后的状态字典（当前直接透传）
         """
+
+        chunks = state.get("chunks")
+        file_title = state.get("file_title")
+        if not chunks:
+            logger.error("文档分块不存在,无法进行主体识别")
+            raise Exception("文档分块不存在，无法进行主体识别")
+        if not file_title:
+            logger.error("文档标题不存在,无法进行主体识别")
+            raise Exception("文档标题不存在，无法进行主体识别")
+
+
+        chunks_k_list = chunks[:10]
+
+
         return state
+
+
+
+
+if __name__ == '__main__':
+    node = NodeItemNameRecognition()
+    with open(r"I:\study\课堂资料\12_尚硅谷大模型之智库掌柜\11、掌柜智库01\资料\05-设备手册汇总\doc\hak180产品安全手册\chunks.json", "r", encoding="utf-8") as f:
+        chunks_json = json.load(f)
+
+
+    init_state = {
+        "chunks": chunks_json,
+        "file_title":"hak180产品安全手册"
+    }
+    result = node(init_state)
+    logger.info(result)

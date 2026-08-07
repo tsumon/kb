@@ -61,8 +61,8 @@ class NodeDocumentSplit(NodeBase):
     def get_section_list(self, md_content,file_title):
         md_line_list = md_content.split("\n") # 按行切分
 
-        code_patten = r"^(`{3,}|~{3,})"
-        title_patten = r'^\s*#{1,6}\s+.+'
+        code_patten = r"^(`{3,}|~{3,})"  # 代码块正则
+        title_patten = r'^\s*#{1,6}\s+.+' # 标题正则
         is_in_block = False
         marker = None
         current_idx = 0
