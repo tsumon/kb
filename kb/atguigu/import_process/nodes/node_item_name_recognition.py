@@ -181,7 +181,7 @@ class NodeItemNameRecognition(NodeBase):
         index_params.add_index(
             field_name="sparse_vector",
             index_type="SPARSE_INVERTED_INDEX",
-            metric_type="IP",
+            metric_type="",
             params={
                 "inverted_index_algo": "DAAT_MAXSCORE",
                 "normalize": True,

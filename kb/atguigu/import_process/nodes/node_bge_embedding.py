@@ -7,9 +7,7 @@
 # ============================================================
 import json
 
-# 导入抽象基类
-from atguigu.import_process.base import NodeBase
-# 导入工作流状态类型
+·from atguigu.import_process.base import NodeBase
 from atguigu.import_process.state import ImportGraphState
 from atguigu.tool.bgem3_client_tool import get_bge_m3_embedding
 from atguigu.tool.json_format_tool import json_format
@@ -22,7 +20,6 @@ class NodeBGEEmbedding(NodeBase):
     一个模型同时输出稠密（dense）与稀疏（sparse）两种向量，支持混合检索。
     """
 
-    # 覆盖基类的 name 属性，标识此节点名称为 "node_bge_embedding"
     name = "node_bge_embedding"
 
     BATCH_SIZE = 3 # 每批编码的切片数量：控制显存占用与整体效率
@@ -38,7 +35,7 @@ class NodeBGEEmbedding(NodeBase):
         self.embed_chunks(chunks)
         return {"chunks": chunks}
 
-    def get_chunks(self, state: ImportGraphState) -> list:
+    def get_chunks(self, state: ImportGraphState) :
         """校验并取出待向量化的切片列表。"""
         chunks = state.get("chunks", "")
         if not chunks:
