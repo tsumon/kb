@@ -6,8 +6,9 @@
 #       支持稠密向量 + 稀疏向量的混合检索，提升语义搜索的召回率。
 # ============================================================
 import json
+import os
 
-·from atguigu.import_process.base import NodeBase
+from atguigu.import_process.base import NodeBase
 from atguigu.import_process.state import ImportGraphState
 from atguigu.tool.bgem3_client_tool import get_bge_m3_embedding
 from atguigu.tool.json_format_tool import json_format
@@ -26,41 +27,28 @@ class NodeBGEEmbedding(NodeBase):
 
     def process(self, state: ImportGraphState):
         """
-        混合向量化入口：校验 → 分批向量化。
-
-        :param state: 工作流状态字典
-        :return:     更新后的状态字典（chunks 已带 dense_vector / sparse_vector）
+        混合向量化入口：校验 → 分批向量化 → 备份 → 写回 state。
+        BGE-M3 一次输出稠密 + 稀疏两种向量；编码文本为 item_name + content，
+        携带主体语义以提升检索效果。备份文件为 {"chunks": [...]} 的 dict。
         """
-        chunks = self.get_chunks(state)
-        self.embed_chunks(chunks)
-        return {"chunks": chunks}
-
-    def get_chunks(self, state: ImportGraphState) :
-        """校验并取出待向量化的切片列表。"""
         chunks = state.get("chunks", "")
         if not chunks:
             logger.error("chunks不能为空")
             raise ValueError("chunks不能为空")
-        return chunks
 
-    def embed_chunks(self, chunks: list):
-        """分批调用 BGE-M3 编码切片，并把稠密 / 稀疏向量写回每个切片。"""
-        for batch in self.iter_batches(chunks):
-            texts = [self.build_embedding_text(chunk) for chunk in batch]
-            embeddings = get_bge_m3_embedding(texts)
-            for chunk, dense, sparse in zip(batch, embeddings["dense"], embeddings["sparse"]):
-                chunk["dense_vector"] = dense
-                chunk["sparse_vector"] = sparse
-
-    def iter_batches(self, chunks: list):
-        """按 BATCH_SIZE 分批切片，每次产出固定大小的子列表。"""
+        # 分批调用 BGE-M3 编码，向量写回每个切片
         for start in range(0, len(chunks), self.BATCH_SIZE):
-            yield chunks[start:start + self.BATCH_SIZE]
+            batch = chunks[start:start + self.BATCH_SIZE]
+            texts = [f"{chunk.get('item_name', '')}{chunk.get('content', '')}" for chunk in batch]
+            embedding = get_bge_m3_embedding(texts)
+            for idx, chunk in enumerate(batch):
+                chunk["dense_vector"] = embedding.get("dense")[idx]
+                chunk["sparse_vector"] = embedding.get("sparse")[idx]
 
-    def build_embedding_text(self, chunk: dict) -> str:
-        """组装编码文本：主体名 + 切片正文，携带主体语义以提升检索效果。"""
-        return f"{chunk.get('item_name', '')}{chunk.get('content', '')}"
-
+        # 备份向量化后的 chunks，便于下游节点 / 测试读取
+        with open(r"I:\study\课堂资料\12_尚硅谷大模型之智库掌柜\11、掌柜智库01\资料\05-设备手册汇总\doc\hak180产品安全手册\chunks.json","w", encoding="utf-8") as f:
+            f.write(json_format(chunks))
+        return {"chunks": chunks}
 
 if __name__ == '__main__':
     node = NodeBGEEmbedding()

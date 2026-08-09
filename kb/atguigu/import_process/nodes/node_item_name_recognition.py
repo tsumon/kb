@@ -58,6 +58,7 @@ class NodeItemNameRecognition(NodeBase):
         item_name = self.recognize_item_name(file_title, content_str)
         self.save_item_name(item_name, file_title)
 
+
         # 给每个切片打上 item_name 标签，便于下游节点向量化入库时带上主体名称
         for chunk in chunks:
             chunk["item_name"] = item_name
@@ -89,7 +90,7 @@ class NodeItemNameRecognition(NodeBase):
         若加入某切片会超出上限则整体跳过，保证切片不被截断。
         """
         chunks_k_list = chunks[: self.HEAD_CHUNKS]
-        content_str = "\n"
+        content_str = ""  # 给最终拼接的摘要文本设一个初始换行符
         for idx, chunk in enumerate(chunks_k_list, start=1):
             # 每个切片标注来源（切片序号 + 文档标题 + 切片标题），便于 LLM 定位主体
             title = chunk.get("title")
@@ -114,7 +115,7 @@ class NodeItemNameRecognition(NodeBase):
         """
         llm = init_chat_model(
             model = LLMConfig.item_model,
-            model_provider = "openai",
+            model_provider = LLMConfig.model_provider,
             api_key = LLMConfig.openai_api_key,
             base_url = LLMConfig.openai_base,
             temperature = LLMConfig.llm_default_temperature,
@@ -127,7 +128,7 @@ class NodeItemNameRecognition(NodeBase):
                 "content": ITEM_NAME_USER_PROMPT_TEMPLATE.format(file_title=file_title, context=context)
             }
         ]
-        res = llm.invoke(input=messages)
+        res = llm.invoke(messages)
         # LLM 可能返回 None 或结构异常，先兜底成空串再清洗，避免 AttributeError
         item_name = (res.content or "") if res else ""
         item_name = item_name.replace(" ", "").replace("\n", "").replace("\t", "")
@@ -137,80 +138,89 @@ class NodeItemNameRecognition(NodeBase):
 
         return item_name[: self.ITEM_NAME_MAX_LEN]
 
-    # 步骤四：准备 Milvus 集合
-    def ensure_collection(self, milvus_client, collection_name: str):
+    # 步骤四：准备 Milvus 集合（自包含：拿 client + 定集合名 + 创建）
+    def create_milvus_collection(self):
         """
-        集合不存在则创建：id 自增主键 + 元数据字段 + 稠密/稀疏向量字段。
-        dense 用 IVF_FLAT + COSINE（暴力检索 + nlist/nprobe 加速）；
-        sparse 用 SPARSE_INVERTED_INDEX（DAAT_MAXSCORE + L2 归一化，IP 等价于余弦）。
+        创建商品主体集合（不存在则创建）并返回 (collection_name, milvus_client)。
+        幂等：集合已存在则直接返回；返回 client 供调用方复用，避免重复连接。
+
+        字段设计：
+        - id 自增主键 + item_name / file_title 元数据 + 稠密 / 稀疏向量字段
+        - dense 用 IVF_FLAT + COSINE（暴力检索 + nlist/nprobe 加速）
+        - sparse 用 SPARSE_INVERTED_INDEX，metric 用 IP：
+          normalize=True（L2 归一化）后内积等价于余弦相似度；
+          quantization="none" 关闭量化，BGE-M3 输出的 fp16 向量不再二次压缩
         """
-        if milvus_client.has_collection(collection_name):
-            return
+        milvus_client = get_milvus_client()
+        if not milvus_client:
+            logger.error("初始化milvus_client失败")
+            raise Exception("初始化milvus_client失败")
 
-        schema = milvus_client.create_schema(
-            auto_id=True,
-        )
-        schema.add_field(
-            field_name="id",
-            datatype=DataType.INT64,
-            is_primary=True,
-        ).add_field(
-            field_name="item_name",
-            datatype=DataType.VARCHAR,
-            max_length=self.ITEM_NAME_MAX_LEN,
-        ).add_field(
-            field_name="file_title",
-            datatype=DataType.VARCHAR,
-            max_length=100,
-        ).add_field(
-            field_name="dense_vector",
-            datatype=DataType.FLOAT_VECTOR,
-            dim=1024,
-        ).add_field(
-            field_name="sparse_vector",
-            datatype=DataType.SPARSE_FLOAT_VECTOR,
-        )
+        collection_name = MilvusConfig.item_name_collection
+        if not milvus_client.has_collection(collection_name):  # 集合存在则直接返回
+            schema = milvus_client.create_schema(
+                auto_id=True,
+            )
+            schema.add_field(
+                field_name="id",
+                datatype=DataType.INT64,
+                is_primary=True,
+            ).add_field(
+                field_name="item_name",
+                datatype=DataType.VARCHAR,
+                max_length=self.ITEM_NAME_MAX_LEN,
+            ).add_field(
+                field_name="file_title",
+                datatype=DataType.VARCHAR,
+                max_length=100,
+            ).add_field(
+                field_name="dense_vector",
+                datatype=DataType.FLOAT_VECTOR,
+                dim=1024,
+            ).add_field(
+                field_name="sparse_vector",
+                datatype=DataType.SPARSE_FLOAT_VECTOR,
+            )
 
-        index_params = milvus_client.prepare_index_params()
-        index_params.add_index(
-            field_name="dense_vector",
-            index_type="IVF_FLAT",
-            metric_type="COSINE",
-            params={"nlist": 128, "nprobe": 10},
-        )
-        index_params.add_index(
-            field_name="sparse_vector",
-            index_type="SPARSE_INVERTED_INDEX",
-            metric_type="",
-            params={
-                "inverted_index_algo": "DAAT_MAXSCORE",
-                "normalize": True,
-                "quantization": "none",
-            },
-        )
+            index_params = milvus_client.prepare_index_params()
+            index_params.add_index(
+                field_name="dense_vector",
+                index_type="IVF_FLAT",  # 暴力检索
+                metric_type="COSINE",
+                params={"nlist": 128, "nprobe": 10},  # 提升召回效率
+            )
+            index_params.add_index(
+                field_name="sparse_vector",
+                index_type="SPARSE_INVERTED_INDEX",
+                metric_type="IP",  # L2 归一化后内积等价于余弦
+                params={
+                    "inverted_index_algo": "DAAT_MAXSCORE",  # 高效的稀疏检索算法
+                    "normalize": True,
+                    "quantization": "none",
+                },
+            )
 
-        milvus_client.create_collection(
-            collection_name=collection_name,
-            schema=schema,
-            index_params=index_params,
-        )
+            milvus_client.create_collection(
+                collection_name=collection_name,
+                schema=schema,
+                index_params=index_params,
+            )
+
+        return collection_name, milvus_client
 
     # 步骤五：幂等写入 Milvus
     def save_item_name(self, item_name: str, file_title: str):
         """
         将识别出的商品名称向量化写入 Milvus：
-        1. 集合加载后才能执行删除/查询；load 幂等，已加载则直接返回
+        1. 准备/复用集合连接；集合加载后才能执行删除/查询；load 幂等
         2. 幂等删除同名历史数据，再插入，保证不产生重复主体
         3. BGE-M3 编码 item_name → 稠密 + 稀疏向量，写入集合
         """
-        milvus_client = get_milvus_client()
-        collection_name = MilvusConfig.item_name_collection
-
-        self.ensure_collection(milvus_client, collection_name)
+        collection_name, milvus_client = self.create_milvus_collection()
         milvus_client.load_collection(collection_name)
 
-        # 转义过滤表达式中的特殊字符：先转反斜杠，再转双引号（单引号无需转义）
-        safe_item_name = item_name.replace("\\", "\\\\").replace('"', '\\"')
+        # 转义过滤表达式中的特殊字符：先转反斜杠，再转双引号，最后转单引号（顺序不能乱）
+        safe_item_name = item_name.replace("\\", "\\\\").replace('"', '\\"').replace("'", "\\'")
         milvus_client.delete(
             collection_name=collection_name,
             filter=f"item_name == '{safe_item_name}'",

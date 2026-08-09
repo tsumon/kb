@@ -19,6 +19,7 @@ class LLMConfig:
     llm_default_model = os.getenv("LLM_DEFAULT_MODEL")
     vl_model = os.getenv("VL_MODEL")
     item_model = os.getenv("ITEM_MODEL")
+    model_provider = os.getenv("MODEL_PROVIDER")
 
 
 
