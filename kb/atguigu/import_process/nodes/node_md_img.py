@@ -250,7 +250,8 @@ class NodeMDImg(NodeBase):
         img_with_summary_url_list = self.get_img_with_summary_url_list(img_with_summary_list)
 
         # step5 替换md中的图片链接
-        md_content, new_md_path_obj = self.replace_md_img(img_with_summary_url_list, md_path_obj, md_content)
+        result = self.replace_md_img(img_with_summary_url_list, md_path_obj, md_content)
+        md_content, new_md_path_obj = result["md_content"], result["md_path"]
 
         return {"md_content": md_content,}
 

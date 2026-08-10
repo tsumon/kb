@@ -27,17 +27,11 @@ from atguigu.tool.logger import logger
 
 # 主图运行器：封装工作流图的构建、编译与执行
 class MainGraphRunner:
-    """文档导入流水线运行器，负责构建 LangGraph 工作流并执行。"""
 
     def __init__(self):
-        """初始化：创建 StateGraph 构建器，注册所有节点和边。"""
-        # 创建状态图构建器，指定状态类型为 ImportGraphState
         self.builder = StateGraph(state_schema=ImportGraphState)
-        # 向图中添加 7 个处理节点
         self.add_nodes()
-        # 添加节点之间的连接边和条件路由
         self.add_edges()
-        # 编译后的可执行图对象，首次调用 run() 时懒编译
         self.graph = None
 
     def add_nodes(self):
@@ -46,30 +40,16 @@ class MainGraphRunner:
         节点执行顺序由 add_edges() 中的边决定，此处仅为注册。
         每个节点都是 NodeBase 子类实例，通过 __call__ 方法执行。
         """
-        # 入口节点：读取文件，决定后续路由
         self.builder.add_node(NodeEntry.name, NodeEntry())
-        # PDF 转 MD 节点：将 PDF 文件转换为 Markdown 文本
         self.builder.add_node(NodePDFToMD.name, NodePDFToMD())
-        # MD 图片处理节点：提取/处理 Markdown 中的图片引用
         self.builder.add_node(NodeMDImg.name, NodeMDImg())
-        # 文档切分节点：将长文档按语义切分为多个 chunk
         self.builder.add_node(NodeDocumentSplit.name, NodeDocumentSplit())
-        # 主体识别节点：用 LLM 识别文档核心主体名称（如设备名、产品名）
         self.builder.add_node(NodeItemNameRecognition.name, NodeItemNameRecognition())
-        # BGE 向量嵌入节点：将文本 chunk 转为向量表示
         self.builder.add_node(NodeBGEEmbedding.name, NodeBGEEmbedding())
-        # Milvus 入库节点：将向量存入 Milvus 向量数据库
         self.builder.add_node(NodeImportMilvus.name, NodeImportMilvus())
 
     def add_edges(self):
-        """定义节点之间的连接关系（控制流）。
 
-        流程结构：
-            NodeEntry ──(条件路由)──> NodePDFToMD → NodeMDImg → NodeDocumentSplit
-                                   → NodeMDImg（跳过PDF转换）
-                                   → END（无需处理）
-            然后线性推进：→ NodeItemNameRecognition → NodeBGEEmbedding → NodeImportMilvus → END
-        """
         # 设置入口节点：工作流从 NodeEntry 开始执行
         self.builder.set_entry_point(NodeEntry.name)
         # 入口之后的条件路由：根据文件类型决定下一步
@@ -84,16 +64,7 @@ class MainGraphRunner:
         self.builder.add_edge(NodeImportMilvus.name, END)                              # 入库完成后 → 工作流结束
 
     def after_entry_router(self, state: ImportGraphState):
-        """入口条件路由函数：根据文件类型决定后续处理路径。
 
-        路由规则：
-        - PDF 文件 → NodePDFToMD（先转 Markdown）
-        - Markdown 文件 → NodeMDImg（跳过 PDF 转换，直接处理图片）
-        - 其他 / 无需处理 → END（终止工作流）
-
-        :param state: 工作流共享状态（包含 is_pdf_read_enabled / is_md_read_enabled 标志）
-        :return: 下一个节点的名称字符串，或 END 常量
-        """
         # 读取状态中的 Markdown 启用标志（默认 False）
         is_md_read_enabled = state.get("is_md_read_enabled", False)
         # 读取状态中的 PDF 启用标志（默认 False）

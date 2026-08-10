@@ -7,6 +7,7 @@
 # ============================================================
 import json
 import os
+from pathlib import Path
 
 from atguigu.import_process.base import NodeBase
 from atguigu.import_process.state import ImportGraphState
@@ -46,8 +47,11 @@ class NodeBGEEmbedding(NodeBase):
                 chunk["sparse_vector"] = embedding.get("sparse")[idx]
 
         # 备份向量化后的 chunks，便于下游节点 / 测试读取
-        with open(r"I:\study\课堂资料\12_尚硅谷大模型之智库掌柜\11、掌柜智库01\资料\05-设备手册汇总\doc\hak180产品安全手册\chunks.json","w", encoding="utf-8") as f:
-            f.write(json_format(chunks))
+        local_dir = state.get("local_dir")
+        if local_dir:
+            backup_path = Path(local_dir) / "chunks.json"
+            with open(backup_path, "w", encoding="utf-8") as f:
+                f.write(json_format(chunks))
         return {"chunks": chunks}
 
 if __name__ == '__main__':
@@ -56,6 +60,5 @@ if __name__ == '__main__':
     chunks_path = r"I:\study\课堂资料\12_尚硅谷大模型之智库掌柜\11、掌柜智库01\资料\05-设备手册汇总\doc\hak180产品安全手册\chunks.json"
     with open(chunks_path, "r", encoding="utf-8") as f:
         chunks = json.load(f)
-
     result = node({"chunks": chunks})
     logger.info(json_format(result))

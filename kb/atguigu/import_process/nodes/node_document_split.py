@@ -141,7 +141,7 @@ class NodeDocumentSplit(NodeBase):
 
             #真正切分
             splite_chunk_list = spliter.split_text(real_content)
-            for idx, splite_chunk in enumerate(splite_chunk_list):
+            for idx, splite_chunk in enumerate(splite_chunk_list, start=1):
                 final_section_list.append({
                     **section,
                     "content": title + "\n\n" + splite_chunk,

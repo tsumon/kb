@@ -44,28 +44,32 @@ class NodeEntry(NodeBase):
         if not local_file_path:
             # 判断路径字符串是否提供
             logger.error("local_file_path is empty")
-            return ValueError("local_file_path is empty")
+            raise ValueError("local_file_path is empty")
         local_file_path_obj = Path(local_file_path)
 
         if not local_file_path_obj.exists():
             # 判断路径文件是否存在
             logger.error("local_file_path is not exists")
-            return ValueError("local_file_path is not exists")
+            raise ValueError("local_file_path is not exists")
         #logger.info(f"local_file_path 文件开始进行入口判断")
         #判断文件是md还是pdf或其他,进行state赋值,后期可以根据这些值进行路由添加条件边
 
         file_title = local_file_path_obj.stem  #取文件名没后缀, .name是带后缀
         suffix = local_file_path_obj.suffix #取文件格式
+        # 本地输出目录：默认取文件所在目录，供下游节点存放中间产物（md/zip/解压目录等）
+        local_dir = str(local_file_path_obj.parent)
         if suffix.lower() == ".md":
             return {
                 "file_title": file_title,
                 "md_path": str(local_file_path_obj),
+                "local_dir": local_dir,
                 "is_md_read_enabled": True
             }
         elif suffix.lower() == ".pdf":
             return {
                 "file_title": file_title,
                 "pdf_path": str(local_file_path_obj),
+                "local_dir": local_dir,
                 "is_pdf_read_enabled": True
             }
         else:

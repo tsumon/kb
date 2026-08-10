@@ -6,6 +6,8 @@
 #       将识别结果写入 state.item_name，便于后续分类检索。
 # ============================================================
 import json
+from pathlib import Path
+
 from langchain.chat_models import init_chat_model
 from pymilvus import DataType
 
@@ -66,6 +68,14 @@ class NodeItemNameRecognition(NodeBase):
         # 写回状态，供下游节点使用
         state["item_name"] = item_name
         state["chunks"] = chunks
+
+        # 备份打标后的 chunks，便于下游节点 / 测试读取
+        local_dir = state.get("local_dir")
+        if local_dir:
+            backup_path = Path(local_dir) / "item_name_chunks.json"
+            with open(backup_path, "w", encoding="utf-8") as f:
+                f.write(json_format(chunks))
+
         return state
 
     # 步骤一：校验输入
@@ -183,12 +193,14 @@ class NodeItemNameRecognition(NodeBase):
             )
 
             index_params = milvus_client.prepare_index_params()
+            # 添加稠密向量索引
             index_params.add_index(
                 field_name="dense_vector",
                 index_type="IVF_FLAT",  # 暴力检索
                 metric_type="COSINE",
                 params={"nlist": 128, "nprobe": 10},  # 提升召回效率
             )
+            # 添加稀疏向量索引
             index_params.add_index(
                 field_name="sparse_vector",
                 index_type="SPARSE_INVERTED_INDEX",
