@@ -26,9 +26,9 @@ def get_mongo_collection():
         if collection is None:
             #创建索引
             collection = db["chat_history"]
-            # 复合索引：_id 升序 + ts 降序 + session_id 升序，
+            # 复合索引：session_id 升序 + ts 降序，
             # 用于支持按 session_id 过滤、按 ts 倒序取最近 N 条历史记录的查询
-            collection.create_index([("_id", 1),("ts",-1),("session_id",1)])
+            collection.create_index([("session_id", 1), ("ts", -1)])
         return collection
     except Exception as e:
         logger.error(f"获取 Mongo 集合失败: {e}")
@@ -63,9 +63,12 @@ def add_or_update_history(session_id,role,text,rewritten_query=None,item_names=N
                 "text": text,
                 "rewritten_query": rewritten_query,
                 "item_names": item_names,
-                "ts": ts or time.time(),
+                "ts": time.time() if ts is None else ts,
             }
-            collection.updateOne({"_id": _id}, {"$set": data})
+            result = collection.update_one({"_id": _id}, {"$set": data})
+            if result.matched_count == 0:
+                logger.warning(f"未找到 _id={_id} 的记录，插入新记录")
+                collection.insert_one(data)
             return _id
         else:# create
             data = {
@@ -74,10 +77,9 @@ def add_or_update_history(session_id,role,text,rewritten_query=None,item_names=N
                 "text": text,
                 "rewritten_query": rewritten_query,
                 "item_names": item_names,
-                "ts": ts or time.time(),
+                "ts": time.time() if ts is None else ts,
             }
             result = collection.insert_one(data)
-            print(result.inserted_id)
             return result.inserted_id
     except Exception as e:
         logger.error(f"写入历史记录失败 session_id={session_id}: {e}")
@@ -87,25 +89,19 @@ def add_or_update_history(session_id,role,text,rewritten_query=None,item_names=N
 def delete_history(session_id):
     try:
         collection = get_mongo_collection()
-        collection.delete_one({"session_id": session_id})
+        collection.delete_many({"session_id": session_id})
     except Exception as e:
         logger.error(f"删除历史记录失败 session_id={session_id}: {e}")
         raise e
 
 
-def update_item_names_and_query(session_id, item_names=None, rewritten_query=None):
-    try:
-        collection = get_mongo_collection()
-        data = {
-            "session_id":session_id,
-            "item_names": item_names,
-            "rewritten_query": rewritten_query,
-        }
-        collection.updateOne({"session_id": session_id},{"$set":data})
-    except Exception as e:
-        logger.error(f"更新历史记录意图失败 session_id={session_id}: {e}")
-        raise e
-
+def update_item_names_and_query(ids,item_names=None,rewritten_query=None):
+    collection = get_mongo_collection()
+    data = {
+        "item_names": item_names,
+        "rewritten_query": rewritten_query,
+    }
+    collection.update_many({"_id": {"$in":ids}},{"$set":data})
 
 if __name__ == '__main__':
     add_or_update_history("01", "user", "问下烫金机。")
