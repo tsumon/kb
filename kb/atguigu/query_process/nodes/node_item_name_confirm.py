@@ -39,14 +39,15 @@ class NodeItemNameConfirm(NodeBase):
 
         original_query = state.get("original_query")
         if not original_query:
-            logger.error("original_query不能为空")
-            raise ValueError("original_query不能为空")
+            logger.error("用户原始问题为空")
+            raise ValueError("用户原始问题为空")
 
         # 这次提问先落库，拿到 message_id，后面回填要用
         message_id = add_or_update_history(session_id, "user", original_query)
 
         # 最近 10 条拼成字符串，连用户带助手的话一起喂给大模型
         history_list = get_recent_history_list(session_id, limit=10)
+
         history_content = "".join(
             f"{history.get('role')}: {history.get('text')}\n"
             for history in history_list
@@ -58,7 +59,7 @@ class NodeItemNameConfirm(NodeBase):
     def get_item_names(history_content, original_query):
         llm = init_chat_model(
             model=LLMConfig.item_model,
-            model_provider="openai",
+            model_provider=LLMConfig.model_provider,
             api_key=LLMConfig.openai_api_key,
             base_url=LLMConfig.openai_base,
             temperature=LLMConfig.llm_default_temperature,
@@ -206,7 +207,6 @@ class NodeItemNameConfirm(NodeBase):
 
 
 if __name__ == '__main__':
-    # 先塞几条测试数据
     session_id = "test_001"
     add_or_update_history(session_id, "user", "咨询下烫金机。")
     add_or_update_history(session_id, "assistant", "您好。请问是哪个型号")
