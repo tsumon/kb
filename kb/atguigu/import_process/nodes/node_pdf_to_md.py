@@ -7,6 +7,7 @@
 #       当前为骨架代码，process() 只透传状态。
 # ============================================================
 from pathlib import Path
+import time
 
 from atguigu.config.config import MineruConfig
 # 导入抽象基类，复用日志/异常模板方法
@@ -171,11 +172,44 @@ class NodePDFToMD(NodeBase):
 
     def download_zip_handler(self,md_zip_url,local_dir_obj,pdf_path_obj):
         import requests
-        md_zip_res = requests.get(md_zip_url)
-        if md_zip_res.status_code != 200:
-            logger.error("下载PDF文件处理结果zip压缩包请求失败")
-            raise Exception(f"下载PDF文件处理结果zip压缩包请求失败")
-        md_zip_content = md_zip_res.content #通过文件流操作把zip内容写入磁盘文件
+        import urllib3
+        import ssl
+        from urllib3.util.ssl_ import create_urllib3_context
+        # 禁用SSL警告（仅用于开发/测试环境）
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                # 创建自定义SSL上下文，禁用证书验证并允许不安全的重新协商
+                ctx = create_urllib3_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                ctx.set_ciphers('DEFAULT:@SECLEVEL=1')
+                ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT (允许旧版服务器连接)
+
+                # 创建带有自定义SSL上下文的连接池
+                https_pool = urllib3.HTTPSConnectionPool(
+                    'cdn-mineru.openxlab.org.cn',
+                    ssl_context=ctx,
+                    cert_reqs='CERT_NONE',
+                    timeout=30
+                )
+
+                # 下载文件
+                md_zip_res = https_pool.request('GET', md_zip_url.split('cdn-mineru.openxlab.org.cn')[1], timeout=30)
+                if md_zip_res.status != 200:
+                    logger.error("下载PDF文件处理结果zip压缩包请求失败")
+                    raise Exception(f"下载PDF文件处理结果zip压缩包请求失败")
+                md_zip_content = md_zip_res.data #通过文件流操作把zip内容写入磁盘文件
+                break
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"下载失败，尝试 {attempt + 1}/{max_retries}: {e}")
+                    time.sleep(2)
+                else:
+                    logger.error(f"下载失败，已重试{max_retries}次: {e}")
+                    raise Exception(f"下载PDF文件处理结果zip压缩包失败: {e}")
         md_zip_path_obj = local_dir_obj / f"{pdf_path_obj.stem}.zip" #构造下载的磁盘文件路径
 
         #以后读写文件如果是读写二进制,就不要加encoding='utf-8',容如果不是就加

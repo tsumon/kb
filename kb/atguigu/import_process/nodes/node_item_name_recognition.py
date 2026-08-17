@@ -182,7 +182,7 @@ class NodeItemNameRecognition(NodeBase):
             ).add_field(
                 field_name="file_title",
                 datatype=DataType.VARCHAR,
-                max_length=100,
+                max_length=256,
             ).add_field(
                 field_name="dense_vector",
                 datatype=DataType.FLOAT_VECTOR,

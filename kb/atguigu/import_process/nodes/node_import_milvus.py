@@ -31,8 +31,8 @@ class NodeImportMilvus(NodeBase):
     name = "node_import_milvus"
 
     # ---------- 集合 schema 字段长度上限（需与各 VARCHAR 字段一致） ----------
-    FILE_TITLE_MAX_LEN = 100
-    TITLE_MAX_LEN = 100
+    FILE_TITLE_MAX_LEN = 256
+    TITLE_MAX_LEN = 256
     CONTENT_MAX_LEN = 5000
     ITEM_NAME_MAX_LEN = 100
 

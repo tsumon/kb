@@ -115,7 +115,6 @@ class NodeRerank(NodeBase):
 
         #step3 cliff detection 断崖检测，砍掉相关性断崖后面的低分文档
         return {
-            # 注意：key 必须和 state.py 里的 reranked_docs 对齐，否则 langgraph 会报 InvalidUpdateError
             "reranked_docs": self.cliff_detection(rerank_merge_chunks)
         }
 

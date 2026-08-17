@@ -9,14 +9,6 @@
 from langgraph.constants import END
 # LangGraph 核心：StateGraph 有状态工作流图构建器
 from langgraph.graph import StateGraph
-# 各流程节点类（每个节点封装一个处理步骤）
-from atguigu.import_process.nodes.node_bge_embedding import NodeBGEEmbedding          # BGE 向量嵌入节点
-from atguigu.import_process.nodes.node_document_split import NodeDocumentSplit        # 文档切分节点
-from atguigu.import_process.nodes.node_entry import NodeEntry                         # 入口路由节点
-from atguigu.import_process.nodes.node_import_milvus import NodeImportMilvus          # Milvus 入库节点
-from atguigu.import_process.nodes.node_item_name_recognition import NodeItemNameRecognition  # 主体识别节点
-from atguigu.import_process.nodes.node_md_img import NodeMDImg                        # Markdown 图片处理节点
-from atguigu.import_process.nodes.node_pdf_to_md import NodePDFToMD                   # PDF 转 Markdown 节点
 # 工作流共享状态类型（TypedDict，定义所有节点间传递的字段）
 from atguigu.import_process.state import ImportGraphState
 # JSON 格式化工具（用于美化输出日志）
@@ -39,7 +31,16 @@ class MainGraphRunner:
 
         节点执行顺序由 add_edges() 中的边决定，此处仅为注册。
         每个节点都是 NodeBase 子类实例，通过 __call__ 方法执行。
+        使用延迟导入避免在模块加载时加载所有 ML/AI 库
         """
+        from atguigu.import_process.nodes.node_entry import NodeEntry
+        from atguigu.import_process.nodes.node_pdf_to_md import NodePDFToMD
+        from atguigu.import_process.nodes.node_md_img import NodeMDImg
+        from atguigu.import_process.nodes.node_document_split import NodeDocumentSplit
+        from atguigu.import_process.nodes.node_item_name_recognition import NodeItemNameRecognition
+        from atguigu.import_process.nodes.node_bge_embedding import NodeBGEEmbedding
+        from atguigu.import_process.nodes.node_import_milvus import NodeImportMilvus
+
         self.builder.add_node(NodeEntry.name, NodeEntry())
         self.builder.add_node(NodePDFToMD.name, NodePDFToMD())
         self.builder.add_node(NodeMDImg.name, NodeMDImg())
@@ -49,6 +50,14 @@ class MainGraphRunner:
         self.builder.add_node(NodeImportMilvus.name, NodeImportMilvus())
 
     def add_edges(self):
+        # 延迟导入节点类
+        from atguigu.import_process.nodes.node_entry import NodeEntry
+        from atguigu.import_process.nodes.node_pdf_to_md import NodePDFToMD
+        from atguigu.import_process.nodes.node_md_img import NodeMDImg
+        from atguigu.import_process.nodes.node_document_split import NodeDocumentSplit
+        from atguigu.import_process.nodes.node_item_name_recognition import NodeItemNameRecognition
+        from atguigu.import_process.nodes.node_bge_embedding import NodeBGEEmbedding
+        from atguigu.import_process.nodes.node_import_milvus import NodeImportMilvus
 
         # 设置入口节点：工作流从 NodeEntry 开始执行
         self.builder.set_entry_point(NodeEntry.name)
@@ -64,6 +73,9 @@ class MainGraphRunner:
         self.builder.add_edge(NodeImportMilvus.name, END)                              # 入库完成后 → 工作流结束
 
     def after_entry_router(self, state: ImportGraphState):
+        # 延迟导入节点类
+        from atguigu.import_process.nodes.node_pdf_to_md import NodePDFToMD
+        from atguigu.import_process.nodes.node_md_img import NodeMDImg
 
         # 读取状态中的 Markdown 启用标志（默认 False）
         is_md_read_enabled = state.get("is_md_read_enabled", False)

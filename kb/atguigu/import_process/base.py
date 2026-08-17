@@ -6,7 +6,7 @@
 #       基类 __call__() 统一处理日志和异常。
 # 依赖：ImportGraphState（状态类型定义）、logger（彩色日志实例）
 # ============================================================
-
+import time
 # Python 抽象基类（Abstract Base Class）模块
 # ABC：抽象基类的基类，继承它才能定义抽象方法
 # abstractmethod：装饰器，标记必须由子类实现的方法
@@ -16,6 +16,8 @@ from abc import ABC, abstractmethod
 from atguigu.import_process.state import ImportGraphState
 # 从 tool 模块导入全局彩色日志实例
 from atguigu.tool.logger import logger
+from atguigu.tool.task_utils import add_running_task, add_done_task, add_node_duration
+
 
 class NodeBase(ABC):
     """
@@ -50,6 +52,10 @@ class NodeBase(ABC):
         try:
             # [1] 前置日志：节点开始执行
             logger.info(f"--- {self.name} 开始啦 ---")
+            task_id =  state.get("task_id")
+            add_running_task(task_id, self.name)
+            start_time = time.time()
+
 
             # [2] 委托给子类的 process() 执行业务逻辑
             result = self.process(state)
@@ -57,12 +63,19 @@ class NodeBase(ABC):
             # [3] 后置日志：节点执行成功
             logger.info(f"--- {self.name} 完成啦 ---")
 
+            #修改每个节点执行完成的状态
+            add_done_task(task_id, self.name)
+            end_time = time.time()
+
+            #计算用时
+            add_node_duration(task_id, self.name, end_time - start_time)
+
             return result
 
         except Exception as e:
             # [4] 异常日志：捕获到异常时记录错误信息，并重新抛出
             logger.error(f"{self.name} 执行失败: {e}")
-            raise  # 重新抛出，让上层调用者（如 LangGraph 引擎）感知失败
+            raise  e# 重新抛出，让上层调用者（如 LangGraph 引擎）感知失败
 
     # ----------------------------------------------------------
     # 抽象方法：子类必须实现此方法
