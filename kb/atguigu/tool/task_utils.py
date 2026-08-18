@@ -197,6 +197,12 @@ def put_data(task_id: str, event: str, data) -> None:
     q = create_queue(task_id)
     q.put({"event": event, "data": data})
 
+def get_data(task_id: str) -> dict:
+    """从 task_id 对应的队列取一条 SSE 消息（阻塞直到有数据）。
+    队列不存在时先创建再取，保证两种时序下都不丢。"""
+    q = create_queue(task_id)
+    return q.get()
+
 def remove_queue(task_id: str) -> None:
     """任务结束后删除队列，防止 queue_dict 随任务数无限增长（内存泄漏）。"""
     queue_dict.pop(task_id, None)

@@ -1,5 +1,4 @@
 import json
-import time
 import uuid
 
 from fastapi import FastAPI, Body, BackgroundTasks
@@ -20,8 +19,7 @@ from atguigu.tool.task_utils import (
     update_task_status,
     create_queue,
     put_data,
-    remove_queue,
-    queue_dict,
+    get_data,
 )
 
 app = FastAPI(
@@ -51,14 +49,16 @@ async def health():
 async def history(session_id: str = Path(..., description="会话ID")):
     history_list = get_recent_history_list(session_id)
     history_list = [
-        {"_id":str(item.get("_id")),
-         "role":item.get("role",""),
-         "text":item.get("text",""),
-         "rewritten_query":item.get("rewritten_query",""),
-         "item_names":item.get("item_names",""),
-         "ts":item.get("ts",""),
-         "session_id":item.get("session_id","")
-         }
+        {
+        "_id":str(item.get("_id")),
+        "role":item.get("role",""),
+        "text":item.get("text",""),
+        "rewritten_query":item.get("rewritten_query",""),
+        "item_names":item.get("item_names",""),
+        "image_urls":item.get("image_urls", []),
+        "ts":item.get("ts",""),
+        "session_id":item.get("session_id","")
+        }
         for item in history_list
     ]
 
@@ -116,10 +116,6 @@ async def query(background_tasks: BackgroundTasks, query_params: QueryParams = B
     original_query = query_params.query
     session_id = query_params.session_id
 
-    # /query 响应返回时后台任务才开始跑，这里先把队列建好，
-    # 保证前端拿到 task_id 立刻连 /stream 时队列已存在（也防止极端时序下消息先于连接产生）
-    create_queue(task_id)
-
     #调用后台接口任务执行graph
     background_tasks.add_task(run_query_graph, task_id, original_query, session_id)
 
@@ -131,21 +127,16 @@ async def query(background_tasks: BackgroundTasks, query_params: QueryParams = B
 
 
 def generate_stream(task_id: str):
-    while not queue_dict.get(task_id):
-        time.sleep(1)
-    q = create_queue(task_id)
     while True:
-        item = q.get()
-        # 队列里的 data 统一是 dict（各节点 base.py 与 run_query_graph 直接放 get_task_info() 的结果），
-        # 在流出口统一 json.dumps 序列化（ensure_ascii=False 保留中文），保证前端 JSON.parse(e.data) 一定能解析
+        item = get_data(task_id)
         event = item.get("event")
         data = item.get("data")
         yield f"event: {event}\n"
         yield f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
-        # 终态（final / error）后关闭流并清理队列，否则 q.get() 永远阻塞、线程泄漏
+        # 终态后关闭流
         if event in ("final", "error"):
-            remove_queue(task_id)
             break
+
 
 
 
