@@ -1,5 +1,4 @@
 # atguigu/query_process/state.py
-
 from typing import TypedDict, List
 
 class QueryGraphState(TypedDict):
@@ -10,7 +9,7 @@ class QueryGraphState(TypedDict):
 
     session_id: str  # 会话ID
     message_id: str  # 消息ID
-
+    task_id: str  # 任务ID
     original_query: str  # 用户原始问题
 
     # 检索过程中的中间数据

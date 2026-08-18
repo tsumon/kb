@@ -94,7 +94,7 @@ class NodeMDImg(NodeBase):
                                         这是一张图片，图片上文部分为"{img_with_context.get("pre_text")}"，
                                         下文部分为"{img_with_context.get("post_text")}"，
                                         请用中文简要总结这张图片的摘要,字数在50字以内。"""
-                         },
+                        },
                     ],
                 },
             ]
@@ -253,7 +253,8 @@ class NodeMDImg(NodeBase):
         result = self.replace_md_img(img_with_summary_url_list, md_path_obj, md_content)
         md_content, new_md_path_obj = result["md_content"], result["md_path"]
 
-        return {"md_content": md_content,}
+        # 新md路径必须带回state：下游node_document_split从md_path读文件，不读md_content
+        return {"md_content": md_content, "md_path": str(new_md_path_obj)}
 
 
 

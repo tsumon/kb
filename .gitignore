@@ -1,0 +1,4 @@
+# 仓库根为 I:/python，实际工程是 kb/；其余目录不纳入版本控制
+langchain/
+langgraph/
+.idea/

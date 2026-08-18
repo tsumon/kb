@@ -90,20 +90,23 @@ class NodeSearchEmbeddingHyde(NodeBase):
             logger.error("【%s】rewritten_query is None", self.name)
             raise ValueError("rewritten_query is None")
         if not item_names:
-            logger.error("【%s】item_names is None", self.name)
-            raise ValueError("item_names is None")
+            # 商品名未确认（LLM 未提取出/确认失败）：跳过本地检索，交给 web 搜索兜底
+            logger.warning("【%s】item_names 为空，跳过本地检索", self.name)
+            return [], rewritten_query
 
         # 清洗空串项
         item_names = [item.strip() for item in item_names if item.strip()]
         if not item_names:
-            logger.error("【%s】item_names 清洗后为空", self.name)
-            raise ValueError("item_names is empty after cleaning")
+            logger.warning("【%s】item_names 清洗后为空，跳过本地检索", self.name)
+            return [], rewritten_query
         return item_names, rewritten_query
 
 
     def process(self, state: QueryGraphState):
         # 获取重写的问题
         item_names, rewritten_query = self.get_rewritten_query(state)
+        if not item_names:
+            return {"hyde_embedding_chunks": []}
         # 生成假设性答案并合并原始问题
         merged_query = self.get_hyde_answer(rewritten_query)
         # 混合搜索获取切片

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from queue import Queue
 from typing import Dict, List
 
 # ---------------------------
@@ -176,3 +177,26 @@ def get_task_info(task_id: str) -> Dict[str, any]:
         "done_list": get_done_task_list(task_id),
         "durations": get_node_durations(task_id)
     }
+
+
+
+queue_dict: Dict[str, Queue] = {}
+
+def create_queue(task_id: str) -> Queue:
+    """按 task_id 获取队列；不存在则创建。
+    生产者（后台任务/节点）和消费者（SSE 流）谁先到都拿到同一个队列对象，
+    因此 generate_stream 不再需要 sleep 轮询等队列出现。"""
+    if not queue_dict.get(task_id):
+        queue_dict[task_id] = Queue()
+    return queue_dict[task_id]
+
+def put_data(task_id: str, event: str, data) -> None:
+    """往 task_id 对应的队列放一条 SSE 消息。
+    队列不存在时先创建再放（put_data 内部复用 create_queue），
+    保证「后台任务先跑、SSE 后连」和「SSE 先连、后台后跑」两种时序下消息都不丢。"""
+    q = create_queue(task_id)
+    q.put({"event": event, "data": data})
+
+def remove_queue(task_id: str) -> None:
+    """任务结束后删除队列，防止 queue_dict 随任务数无限增长（内存泄漏）。"""
+    queue_dict.pop(task_id, None)

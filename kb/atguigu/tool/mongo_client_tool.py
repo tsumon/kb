@@ -40,15 +40,21 @@ def get_mongo_collection():
 def get_recent_history_list(session_id,limit=10):
     try:
         collection = get_mongo_collection()
-        result = collection.find({"session_id": session_id}).sort("ts", -1).limit(limit)
-        return list(result)  #result是游标对象，用list（）强转
+        # 先按 ts 倒序取最近 limit 条（次级按 _id 倒序，ts 相同时保证顺序稳定），
+        # 再反转成时间正序（旧→新）：前端渲染和大模型拼接历史都需要自然对话顺序
+        result = (
+            collection.find({"session_id": session_id})
+            .sort([("ts", -1), ("_id", -1)])
+            .limit(limit)
+        )
+        return list(result)[::-1]  #result是游标对象，用list（）强转后反转
     except Exception as e:
         logger.error(f"获取历史记录失败 session_id={session_id}: {e}")
         raise e
 
 
 # C & U
-def add_or_update_history(session_id,role,text,rewritten_query=None,item_names=None,ts=None,_id=None):
+def add_or_update_history(session_id,role,text,rewritten_query=None,item_names=None,ts=None,_id=None,image_urls=None):
     # 全量更新，增量更新
     # c and u 封装为一个函数，是因为他们传参的时候唯一不同就是id
     #若 u ，则id一定存在，若 c ，则id一定不存在
@@ -63,6 +69,7 @@ def add_or_update_history(session_id,role,text,rewritten_query=None,item_names=N
                 "text": text,
                 "rewritten_query": rewritten_query,
                 "item_names": item_names,
+                "image_urls": image_urls,
                 "ts": time.time() if ts is None else ts,
             }
             result = collection.update_one({"_id": _id}, {"$set": data})
@@ -77,6 +84,7 @@ def add_or_update_history(session_id,role,text,rewritten_query=None,item_names=N
                 "text": text,
                 "rewritten_query": rewritten_query,
                 "item_names": item_names,
+                "image_urls": image_urls,
                 "ts": time.time() if ts is None else ts,
             }
             result = collection.insert_one(data)
@@ -104,11 +112,11 @@ def update_item_names_and_query(ids,item_names=None,rewritten_query=None):
     collection.update_many({"_id": {"$in":ids}},{"$set":data})
 
 if __name__ == '__main__':
-    add_or_update_history("01", "user", "问下烫金机。")
-    add_or_update_history("01", "assistant", "请问是哪个型号")
-    result = add_or_update_history("01", "user", "hak180")
+    add_or_update_history("01", "user", "问下烫金机。",image_urls=["https://img.alicdn.com/imgextra/i4/O1CN01j7w0wE1D01X01X01.jpg"])
+    add_or_update_history("01", "assistant", "请问是哪个型号",image_urls=["https://img.alicdn.com/imgextra/i4/O1CN01j7w0wE1D01X01X01.jpg"])
+    result = add_or_update_history("01", "user", "hak180",image_urls=["https://img.alicdn.com/imgextra/i4/O1CN01j7w0wE1D01X01X01.jpg"])
     print(result,type(result))
-    add_or_update_history("01", "assistant", "具体有什么问题呢？")
+    add_or_update_history("01", "assistant", "具体有什么问题呢？",image_urls=["https://img.alicdn.com/imgextra/i4/O1CN01j7w0wE1D01X01X01.jpg"])
 
 
     result = get_recent_history_list("01")

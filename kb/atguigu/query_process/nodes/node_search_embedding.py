@@ -93,8 +93,9 @@ class NodeSearchEmbedding(NodeBase):
             raise ValueError("rewritten_query is None")
 
         if not item_names:
-            logger.error(" item_names is None")
-            raise ValueError("item_names is None")
+            # 商品名未确认（LLM 未提取出/确认失败）：跳过本地检索，交给 web 搜索兜底
+            logger.warning("【%s】item_names 为空，跳过本地检索", self.name)
+            return {"embedding_chunks": []}
 
         # 1. 向量化改写后的问题
         dense_data, sparse_data = self.get_query_embeddings(rewritten_query)
