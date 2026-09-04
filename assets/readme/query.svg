@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">查询图：先确认商品名，再三路召回</title>
+  <desc id="desc">问题先过商品名闸口：分数 ≥0.85 确认，0.60–0.85 反问用户，低于 0.60 拒识。确认后三路并行：向量检索、HyDE、联网搜索。本地两路经 RRF 融合，再与网页结果一起 rerank，断崖检测后生成带手册配图的答案。</desc>
+
+  <defs>
+    <clipPath id="query-clip">
+      <rect width="1200" height="620" rx="16"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#query-clip)">
+    <rect width="1200" height="620" fill="#0F1C18"/>
+
+    <rect width="72" height="620" fill="#173028"/>
+    <rect x="71" width="1" height="620" fill="#2A4A3E"/>
+    <g fill="#E2B15A">
+      <circle cx="36" cy="110" r="9"/>
+      <circle cx="36" cy="310" r="9"/>
+      <circle cx="36" cy="510" r="9"/>
+    </g>
+    <g fill="#0F1C18">
+      <circle cx="36" cy="110" r="4.2"/>
+      <circle cx="36" cy="310" r="4.2"/>
+      <circle cx="36" cy="510" r="4.2"/>
+    </g>
+
+    <text x="104" y="44" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" letter-spacing="2" fill="#E2B15A">QUERY GRAPH</text>
+    <text x="104" y="82" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="32" font-weight="700" fill="#E8F0EC">先认机器，再翻手册</text>
+    <text x="104" y="114" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" fill="#A8B8B0">没确认 item_name，不进检索。确认后才允许按商品名过滤。</text>
+
+    <!-- question -->
+    <g transform="translate(104 136)">
+      <rect width="496" height="56" rx="6" fill="#173028" stroke="#2A4A3E"/>
+      <text x="18" y="36" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" fill="#7D8B84">Q</text>
+      <text x="44" y="36" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" fill="#E8F0EC">这个怎么接地？</text>
+    </g>
+    <g transform="translate(620 136)">
+      <rect width="480" height="56" rx="6" fill="#173028" stroke="#3ECF8E"/>
+      <text x="18" y="36" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" fill="#3ECF8E">→</text>
+      <text x="44" y="36" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" fill="#E8F0EC">hak180烫金机如何接地</text>
+    </g>
+
+    <!-- confirm gate -->
+    <g transform="translate(104 212)">
+      <rect width="996" height="92" rx="6" fill="#173028" stroke="#E2B15A" stroke-width="1.6"/>
+      <g transform="translate(20 16)">
+        <rect width="156" height="60" rx="4" fill="#E2B15A"/>
+        <circle cx="22" cy="30" r="7" fill="#0F1C18"/>
+        <circle cx="22" cy="30" r="4" fill="none" stroke="#F2E6C9" stroke-width="1.3"/>
+        <text x="38" y="26" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#0F1C18">GATE</text>
+        <text x="38" y="46" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" font-weight="700" fill="#0F1C18">商品名确认</text>
+      </g>
+
+      <g transform="translate(196 18)">
+        <rect width="240" height="56" rx="4" fill="#0F1C18"/>
+        <text x="16" y="24" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#3ECF8E">≥ 0.85</text>
+        <text x="16" y="46" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#E8F0EC">确认，进入检索</text>
+      </g>
+      <g transform="translate(452 18)">
+        <rect width="260" height="56" rx="4" fill="#0F1C18"/>
+        <text x="16" y="24" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#E2B15A">0.60 – 0.85</text>
+        <text x="16" y="46" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#E8F0EC">反问：是哪一台？</text>
+      </g>
+      <g transform="translate(728 18)">
+        <rect width="248" height="56" rx="4" fill="#0F1C18"/>
+        <text x="16" y="24" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#D46A4C">&lt; 0.60</text>
+        <text x="16" y="46" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" font-weight="600" fill="#E8F0EC">拒识，请重新提问</text>
+      </g>
+    </g>
+
+    <!-- three lanes -->
+    <g transform="translate(104 328)">
+      <g>
+        <rect width="312" height="112" rx="6" fill="#173028" stroke="#2A4A3E"/>
+        <text x="18" y="30" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#E2B15A">LANE A  EMBEDDING</text>
+        <text x="18" y="60" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#E8F0EC">改写问题直接检索</text>
+        <text x="18" y="88" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">dense 0.8  ·  sparse 0.2  ·  top 10</text>
+      </g>
+      <g transform="translate(342 0)">
+        <rect width="312" height="112" rx="6" fill="#173028" stroke="#2A4A3E"/>
+        <text x="18" y="30" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#E2B15A">LANE B  HYDE</text>
+        <text x="18" y="60" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#E8F0EC">先写范文再检索</text>
+        <text x="18" y="88" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">假设答案 ≤300 字  ·  同一过滤</text>
+      </g>
+      <g transform="translate(684 0)">
+        <rect width="312" height="112" rx="6" fill="#173028" stroke="#2A4A3E"/>
+        <text x="18" y="30" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#6BA3C9">LANE C  WEB</text>
+        <text x="18" y="60" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#E8F0EC">百炼联网搜索</text>
+        <text x="18" y="88" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">MCP  ·  不进 RRF，进 rerank</text>
+      </g>
+    </g>
+
+    <!-- filter expr -->
+    <g transform="translate(104 456)">
+      <rect width="996" height="44" rx="6" fill="#173028"/>
+      <text x="20" y="30" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" fill="#7D8B84">expr</text>
+      <text x="78" y="30" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" fill="#3ECF8E">item_name in ["HAK180烫金机"]</text>
+      <text x="976" y="30" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">A+B 才带这道过滤</text>
+    </g>
+
+    <!-- merge -->
+    <g transform="translate(104 516)">
+      <g>
+        <rect width="312" height="72" rx="6" fill="#173028" stroke="#2A4A3E"/>
+        <text x="18" y="30" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#E2B15A">RRF</text>
+        <text x="18" y="54" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" fill="#E8F0EC">A+B 融合  ·  k=60  ·  top 10</text>
+      </g>
+      <g transform="translate(342 0)">
+        <rect width="312" height="72" rx="6" fill="#173028" stroke="#2A4A3E"/>
+        <text x="18" y="30" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#E2B15A">RERANK + 断崖</text>
+        <text x="18" y="54" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" fill="#E8F0EC">RRF ∪ Web  ·  砍掉低相关尾</text>
+      </g>
+      <g transform="translate(684 0)">
+        <rect width="312" height="72" rx="6" fill="#3ECF8E"/>
+        <text x="18" y="30" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#0F1C18">ANSWER + 配图</text>
+        <text x="18" y="54" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" fill="#0F1C18">SSE 流式  ·  手册图片 URL</text>
+      </g>
+    </g>
+  </g>
+</svg>
