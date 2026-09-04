@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400" role="img" aria-labelledby="title desc">
+  <title id="title">掌柜智库 kb</title>
+  <desc id="desc">设备手册先打上商品名。提问时先确认是哪台机器，再按 item_name 过滤做混合检索。右侧是 HAK180 烫金机的商品吊牌、手册切片，以及把「这个怎么接地？」改写成带商品名的问题。</desc>
+
+  <defs>
+    <clipPath id="hero-clip">
+      <rect width="1200" height="400" rx="16"/>
+    </clipPath>
+    <pattern id="ledger" width="1200" height="32" patternUnits="userSpaceOnUse">
+      <path d="M0 32 H1200" fill="none" stroke="#2A4A3E" stroke-width="0.7" opacity="0.45"/>
+    </pattern>
+  </defs>
+
+  <g clip-path="url(#hero-clip)">
+    <rect width="1200" height="400" fill="#0F1C18"/>
+    <rect x="72" y="0" width="1128" height="400" fill="url(#ledger)" opacity="0.35"/>
+
+    <!-- binder margin -->
+    <rect width="72" height="400" fill="#173028"/>
+    <rect x="71" width="1" height="400" fill="#2A4A3E"/>
+
+    <g fill="#E2B15A">
+      <circle cx="36" cy="88" r="9"/>
+      <circle cx="36" cy="200" r="9"/>
+      <circle cx="36" cy="312" r="9"/>
+    </g>
+    <g fill="#0F1C18">
+      <circle cx="36" cy="88" r="4.2"/>
+      <circle cx="36" cy="200" r="4.2"/>
+      <circle cx="36" cy="312" r="4.2"/>
+    </g>
+    <g fill="none" stroke="#F2E6C9" stroke-width="1.3">
+      <circle cx="36" cy="88" r="5.6"/>
+      <circle cx="36" cy="200" r="5.6"/>
+      <circle cx="36" cy="312" r="5.6"/>
+    </g>
+
+    <!-- category -->
+    <text x="104" y="48" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" letter-spacing="2.2" fill="#E2B15A">PRODUCT-MANUAL RAG</text>
+    <text x="1144" y="48" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">v0.1.0  ·  LangGraph</text>
+
+    <!-- name -->
+    <text x="104" y="118" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="52" font-weight="700" fill="#E8F0EC">掌柜智库</text>
+    <text x="338" y="118" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="28" font-weight="600" fill="#7D8B84">kb</text>
+
+    <text x="104" y="158" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="22" font-weight="600" fill="#E8F0EC">手册先打上商品名。</text>
+    <text x="104" y="190" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" fill="#A8B8B0">提问先确认是哪台机器，再按 item_name 过滤检索。</text>
+
+    <text x="104" y="232" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">MinerU · BGE-M3 dense+sparse · Milvus · FastAPI</text>
+
+    <!-- hang-tags -->
+    <g transform="translate(104 252)">
+      <g>
+        <rect width="176" height="56" rx="4" fill="#E2B15A"/>
+        <circle cx="22" cy="28" r="6" fill="#0F1C18"/>
+        <circle cx="22" cy="28" r="3.6" fill="none" stroke="#F2E6C9" stroke-width="1.3"/>
+        <text x="38" y="24" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" font-weight="700" letter-spacing="1.1" fill="#0F1C18">ITEM_NAME</text>
+        <text x="38" y="46" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" font-weight="700" fill="#0F1C18">HAK180烫金机</text>
+      </g>
+      <g transform="translate(188 0)">
+        <rect width="156" height="56" rx="4" fill="#173028" stroke="#E2B15A" stroke-width="1.4"/>
+        <circle cx="22" cy="28" r="6" fill="#0F1C18"/>
+        <circle cx="22" cy="28" r="3.6" fill="none" stroke="#E2B15A" stroke-width="1.3"/>
+        <text x="38" y="24" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" font-weight="700" letter-spacing="1.1" fill="#E2B15A">ITEM_NAME</text>
+        <text x="38" y="46" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" font-weight="700" fill="#E8F0EC">激光打标机</text>
+      </g>
+      <g transform="translate(356 0)">
+        <rect width="132" height="56" rx="4" fill="#173028" stroke="#2A4A3E" stroke-width="1.2"/>
+        <circle cx="22" cy="28" r="6" fill="#0F1C18"/>
+        <circle cx="22" cy="28" r="3.6" fill="none" stroke="#7D8B84" stroke-width="1.3"/>
+        <text x="38" y="24" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" font-weight="700" letter-spacing="1.1" fill="#7D8B84">ITEM_NAME</text>
+        <text x="38" y="46" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" font-weight="700" fill="#A8B8B0">万用表</text>
+      </g>
+    </g>
+
+    <text x="104" y="344" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">Q  这个怎么接地？</text>
+    <text x="104" y="370" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#3ECF8E">→  hak180烫金机如何接地</text>
+
+    <!-- catalog card: tagged slices -->
+    <g transform="translate(640 72)">
+      <rect width="504" height="288" rx="8" fill="#173028" stroke="#2A4A3E" stroke-width="1.2"/>
+
+      <text x="20" y="32" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" letter-spacing="1.4" fill="#E2B15A">CHUNKS  ·  FILTERED</text>
+      <text x="484" y="32" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#3ECF8E">≥ 0.85 确认</text>
+
+      <!-- slice 1 -->
+      <g transform="translate(20 48)">
+        <rect width="464" height="64" rx="5" fill="#0F1C18" stroke="#2A4A3E"/>
+        <rect width="6" height="64" rx="2" fill="#E2B15A"/>
+        <text x="22" y="24" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="600" fill="#E2B15A">## 设备</text>
+        <text x="444" y="24" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">item_name</text>
+        <text x="22" y="48" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" fill="#E8F0EC">放置平稳、通风、须接地。搬运双手托底。</text>
+      </g>
+
+      <!-- slice 2 -->
+      <g transform="translate(20 122)">
+        <rect width="464" height="64" rx="5" fill="#0F1C18" stroke="#2A4A3E"/>
+        <rect width="6" height="64" rx="2" fill="#E2B15A"/>
+        <text x="22" y="24" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="600" fill="#E2B15A">## 安全位置</text>
+        <text x="444" y="24" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">item_name</text>
+        <text x="22" y="48" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" fill="#E8F0EC">勿伸出桌面边缘。避免震动与冲击。</text>
+      </g>
+
+      <!-- slice 3 -->
+      <g transform="translate(20 196)">
+        <rect width="464" height="64" rx="5" fill="#0F1C18" stroke="#2A4A3E"/>
+        <rect width="6" height="64" rx="2" fill="#E2B15A"/>
+        <text x="22" y="24" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="600" fill="#E2B15A">## 电源</text>
+        <text x="444" y="24" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">item_name</text>
+        <text x="22" y="48" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="18" fill="#E8F0EC">220–240V 交流。禁用直流，防止触电。</text>
+      </g>
+    </g>
+  </g>
+</svg>

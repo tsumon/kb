@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">导入流水线：PDF 变成带商品名的向量切片</title>
+  <desc id="desc">七步导入：入口判断 PDF 或 Markdown，MinerU 转 Markdown，视觉模型给图片写摘要并上传 MinIO，按标题切块 300/30，LLM 打上 item_name 吊牌，BGE-M3 同时写出稠密和稀疏向量，写入 Milvus 的切片库和商品名库。</desc>
+
+  <defs>
+    <clipPath id="import-clip">
+      <rect width="1200" height="420" rx="16"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#import-clip)">
+    <rect width="1200" height="420" fill="#0F1C18"/>
+
+    <rect width="72" height="420" fill="#173028"/>
+    <rect x="71" width="1" height="420" fill="#2A4A3E"/>
+    <g fill="#E2B15A">
+      <circle cx="36" cy="90" r="9"/>
+      <circle cx="36" cy="210" r="9"/>
+      <circle cx="36" cy="330" r="9"/>
+    </g>
+    <g fill="#0F1C18">
+      <circle cx="36" cy="90" r="4.2"/>
+      <circle cx="36" cy="210" r="4.2"/>
+      <circle cx="36" cy="330" r="4.2"/>
+    </g>
+
+    <text x="104" y="48" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" letter-spacing="2" fill="#E2B15A">IMPORT GRAPH</text>
+    <text x="104" y="86" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="32" font-weight="700" fill="#E8F0EC">手册进库，吊牌钉上</text>
+    <text x="104" y="118" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" fill="#A8B8B0">PDF 或 Markdown 走完这条线，切片带着 item_name 进 Milvus。</text>
+
+    <!-- row 1: four stations -->
+    <g transform="translate(104 148)">
+      <g>
+        <rect width="236" height="100" rx="6" fill="#173028" stroke="#2A4A3E"/>
+        <text x="16" y="28" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#E2B15A">01  ENTRY</text>
+        <text x="16" y="56" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#E8F0EC">入口分流</text>
+        <text x="16" y="82" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">.pdf 走 MinerU · .md 直通</text>
+      </g>
+      <g transform="translate(260 0)">
+        <rect width="236" height="100" rx="6" fill="#173028" stroke="#2A4A3E"/>
+        <text x="16" y="28" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#E2B15A">02  MINERU</text>
+        <text x="16" y="56" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#E8F0EC">PDF → Markdown</text>
+        <text x="16" y="82" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">上传 · 轮询 · 解 zip</text>
+      </g>
+      <g transform="translate(520 0)">
+        <rect width="236" height="100" rx="6" fill="#173028" stroke="#2A4A3E"/>
+        <text x="16" y="28" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#E2B15A">03  MD_IMG</text>
+        <text x="16" y="56" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#E8F0EC">图片写摘要</text>
+        <text x="16" y="82" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">VLM 描述 → MinIO</text>
+      </g>
+      <g transform="translate(780 0)">
+        <rect width="236" height="100" rx="6" fill="#173028" stroke="#2A4A3E"/>
+        <text x="16" y="28" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#E2B15A">04  SPLIT</text>
+        <text x="16" y="56" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="20" font-weight="600" fill="#E8F0EC">按标题切块</text>
+        <text x="16" y="82" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">300 / overlap 30 · 表格整留</text>
+      </g>
+    </g>
+
+    <!-- connectors row1 -->
+    <g fill="#E2B15A" opacity="0.7">
+      <rect x="340" y="191" width="24" height="3" rx="1"/>
+      <rect x="600" y="191" width="24" height="3" rx="1"/>
+      <rect x="860" y="191" width="24" height="3" rx="1"/>
+    </g>
+
+    <!-- row 2: the tag is the point -->
+    <g transform="translate(104 272)">
+      <g>
+        <rect width="332" height="112" rx="6" fill="#E2B15A"/>
+        <circle cx="28" cy="56" r="8" fill="#0F1C18"/>
+        <circle cx="28" cy="56" r="4.6" fill="none" stroke="#F2E6C9" stroke-width="1.4"/>
+        <text x="48" y="32" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#0F1C18">05  ITEM_NAME</text>
+        <text x="48" y="62" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="22" font-weight="700" fill="#0F1C18">钉上商品吊牌</text>
+        <text x="48" y="90" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="16" fill="#3A2E14">LLM 读前 10 片 · 写入商品名库</text>
+      </g>
+      <g transform="translate(356 0)">
+        <rect width="332" height="112" rx="6" fill="#173028" stroke="#2A4A3E"/>
+        <text x="20" y="32" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#E2B15A">06  BGE-M3</text>
+        <text x="20" y="62" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="22" font-weight="700" fill="#E8F0EC">稠密 + 稀疏</text>
+        <text x="20" y="90" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">encode(item_name + content)  batch 3</text>
+      </g>
+      <g transform="translate(712 0)">
+        <rect width="304" height="112" rx="6" fill="#173028" stroke="#2A4A3E"/>
+        <text x="20" y="32" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700" fill="#E2B15A">07  MILVUS</text>
+        <text x="20" y="62" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif" font-size="22" font-weight="700" fill="#E8F0EC">两套集合</text>
+        <text x="20" y="90" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7D8B84">chunks  ·  item_name</text>
+      </g>
+    </g>
+  </g>
+</svg>
